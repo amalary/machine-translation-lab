@@ -1,106 +1,81 @@
 # Machine Translation Lab
 
-A local, beginner-friendly English-to-French learning workspace for your Walmart Translation Platform ML Scientist interview on **Friday, October 16, 2026**. You implement the exercises. The setup contains no completed translation pipeline and starts no training.
+A notebook-based learning project for English-to-French machine translation with Hugging Face Transformers, OPUS Books, and T5-small. It covers inspecting parallel text, tokenization, a small fine-tuning experiment, translation evaluation, and pretrained inference.
 
-## Open in VS Code
+This is an exploratory lab, not a deployed translation service. The notebooks contain implemented experiments alongside TODO comments and learning notes. The small training subsets and hand-written examples demonstrate the workflow; they do not establish production translation quality.
 
-From PowerShell:
+## What's in the project
 
-```powershell
-cd 'C:\Users\admin\Documents\Codex\2026-10-12\files-pasted-by-the-user-task\outputs\machine-translation-lab'
-code .
-```
+| Notebook | What it does |
+|---|---|
+| [01 Dataset Exploration](notebooks/01_dataset_exploration.ipynb) | Loads English/French book text, creates a train/test split, and checks empty pairs, duplicates, and overlap. |
+| [02 Tokenization](notebooks/02_tokenization.ipynb) | Prepares source and target tokens with the T5 translation prefix and inspects padding, truncation, attention masks, and labels. |
+| [03 Model Evaluation](notebooks/03_model_evaluation.ipynb) | Configures a small CPU fine-tuning run, compares validation metrics before and after training, and explores translation errors and retail examples. |
+| [04 Model Inference](notebooks/04_model_inference.ipynb) | Generates translations with pretrained T5-small and compares sampling, greedy decoding, and beam search. |
 
-The project uses **Python 3.12.10** in `.venv`. Python 3.11 was not installed; the existing 3.12 installation was used instead of changing global Python installations. Microsoft Python and Jupyter extensions were already installed.
+The dataset is `Helsinki-NLP/opus_books`, configuration `en-fr`. The starting checkpoint is `google-t5/t5-small`.
 
-`.vscode/settings.json` sets the project interpreter. If VS Code shows another interpreter, run **Python: Select Interpreter** and choose `.venv\Scripts\python.exe`. The notebook kernel is a separate selection: choose **Python (machine-translation-lab)**, or **Python Environments > .venv (Python 3.12.10)** in the notebook's top-right kernel picker.
+Other project files:
 
-## Terminal and notebooks
+- `requirements.txt`: pinned dependencies for Windows x64 and Python 3.12, including a CPU-only PyTorch wheel.
+- `tests/test_environment.py`: environment, notebook schema, and kernel smoke tests.
+- `.vscode/`: project interpreter and editor settings.
+- `src/`: a placeholder for future reusable Python utilities; the experiments currently live in notebooks.
+- `data/` and `outputs/`: local inputs and generated results. Their contents are ignored by Git apart from placeholder files.
 
-Open **Terminal > New Terminal**, then activate if VS Code has not done so:
+## Set up locally
 
-```powershell
-.\.venv\Scripts\Activate.ps1
-python -c "import sys; print(sys.executable)"
-python -m pytest tests -q -s
-```
+The checked-in environment configuration targets **Windows x64 with Python 3.12**. The requirements include a platform-specific PyTorch wheel, so they are not a portable installation recipe for other operating systems or Python versions.
 
-You can also avoid activation entirely:
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest tests -q -s
-```
-
-Open **`notebooks/01_dataset_exploration.ipynb` first**. Select the project kernel, add your own code to a TODO cell, and execute with **Shift+Enter**. Restart the kernel and use **Run All** to check your completed work. Initially every exercise cell is a comment, so running all cells performs no tutorial work.
-
-For the browser Jupyter interface:
-
-```powershell
-.\.venv\Scripts\python.exe -m jupyter lab
-```
-
-## Tutorial alignment
-
-Primary reference: [Hugging Face translation tutorial](https://huggingface.co/docs/transformers/tasks/translation), checked October 12, 2026.
-
-| Notebook | Focus | Tutorial connection |
-|---|---|---|
-| 01 Dataset Exploration | Pairs, splits, data quality | OPUS Books loading |
-| 02 Tokenization | Source/target tokens, padding, truncation | Preprocessing and collation |
-| 03 Evaluation | References, SacreBLEU, error analysis | Evaluation |
-| 04 Model Inference | Pretrained baseline, generation, decoding | Inference APIs |
-
-Use dataset **`Helsinki-NLP/opus_books`**, configuration **`en-fr`**, and checkpoint **`google-t5/t5-small`**. Dataset and pretrained weights are intentionally deferred until you implement loading. Public resources do not require a Hugging Face login.
-
-Compatibility notes for the installed stack:
-
-- Target tokenization uses `text_target`; generation uses `AutoModelForSeq2SeqLM.generate`.
-- The current trainer interface uses `processing_class` and training arguments use `eval_strategy`.
-- For a sequence-to-sequence collator, pass an actual model object or omit `model`; a checkpoint name is not a loaded model.
-- The inference exercise uses pretrained T5-small. The tutorial's later inference section assumes you already fine-tuned a checkpoint, so its example output is not a baseline quality guarantee.
-- Evaluate's SacreBLEU wrapper groups references by example. Direct SacreBLEU groups them by reference stream. Inspect the chosen API before scoring.
-- Optional fine-tuning is deferred. For future CPU experiments, keep `fp16=False`, `bf16=False`, `push_to_hub=False`, and start with a small batch. Do not copy the tutorial's GPU and upload settings unchanged.
-
-## Compute and caching
-
-The environment uses the official **CPU build of PyTorch**. Windows detects an **NVIDIA RTX 500 Ada Generation Laptop GPU (4 GB)** with driver 596.58, but CUDA execution is not enabled or claimed verified in this CPU environment. CPU is sufficient for the initial small inference exercises. No CUDA toolkit or driver was changed. Consult [PyTorch's installation guide](https://pytorch.org/get-started/locally/) if you choose GPU setup later.
-
-Hugging Face uses its normal user cache, `%USERPROFILE%\.cache\huggingface`. This shorter location avoids Windows path-length failures in Evaluate's hashed metric filenames. Do not set `HF_HOME` to this deeply nested project folder. Only small repository metadata, tokenizer/config files, and the SacreBLEU module were fetched during setup.
-
-`data/` holds your local inputs; `outputs/` holds your future results. Their contents, `.venv`, and notebook checkpoints are ignored by Git. Keep credentials out of notebooks.
-
-## Verification and reproducibility
-
-`tests/test_environment.py` checks all requested imports, actual tensor operations, CPU/CUDA detection, the installed tutorial API signatures, a tiny randomly initialized T5 backend, local SacreBLEU, all four notebook schemas, interpreter configuration, and a live kernel process. It downloads no data or model weights and does not train. The tiny synthetic T5 check establishes backend functionality only.
-
-`requirements.txt` pins the successfully installed packages, including transitive dependencies, for **Windows x64 / Python 3.12**. The CPU wheel is pinned to its official URL. To recreate this environment at a new location:
+Clone the repository and run these commands from its root in PowerShell. Python 3.12 and `uv` must already be installed:
 
 ```powershell
 py -3.12 -m venv .venv
 uv pip install --python .\.venv\Scripts\python.exe -r requirements.txt
 .\.venv\Scripts\python.exe -m ipykernel install --user --name machine-translation-lab --display-name 'Python (machine-translation-lab)'
 .\.venv\Scripts\python.exe -m pip check
+```
+
+A short checkout path can help avoid Windows path-length errors during installation. The commands use the environment's Python directly, so activating the virtual environment is optional.
+
+Open the project in VS Code and select `.venv\Scripts\python.exe` as the Python interpreter. In each notebook, select **Python (machine-translation-lab)** or the project `.venv` kernel. Alternatively, start JupyterLab:
+
+```powershell
+.\.venv\Scripts\python.exe -m jupyter lab
+```
+
+Re-register the kernel if you move the project or recreate the environment; its kernelspec records an absolute interpreter path.
+
+## Run the lab
+
+Start with notebook 1 and work through the notebooks in order. Each notebook has its own variables, so run its setup and preparation cells before later sections. Dataset, tokenizer, and model-loading cells may download assets on their first run. The notebooks use the normal Hugging Face cache under the user profile rather than storing those downloads in the repository.
+
+**Notebook 3 contains an active `trainer.train()` call.** Running all of its cells starts training, evaluates the model, and saves a checkpoint. Some notebook instructions still describe TODO-only cells or commented-out training; those notes are out of date. Inspect the code before running an entire notebook.
+
+The training experiment uses a seeded 80/10/10 train/validation/test split, with up to 128 training examples and 32 validation examples for one CPU epoch. It reserves the test split for later assessment and saves the model and tokenizer under `outputs/t5-small-en-fr/final`.
+
+Notebook 4 loads the original pretrained checkpoint by default. To inspect your fine-tuned model, change its `model_name` to the saved checkpoint folder. Its sampling example can produce different outputs between runs; the greedy and beam-search comparison disables sampling.
+
+## Evaluation and limitations
+
+The lab uses SacreBLEU together with source/reference/prediction tables and manual review. It also includes small retail examples to inspect quantities, units, brands, and policy meaning, with illustrative latency and review checks.
+
+These experiments have several limits:
+
+- Book prose differs from retail and other application domains. A book-domain score does not establish quality on those domains.
+- A tiny fine-tuning run demonstrates training and evaluation mechanics; it is not evidence of a broadly improved model.
+- BLEU and automatic text checks do not replace bilingual review. Valid alternative translations can score poorly, and meaning errors can pass simple checks.
+- The hand-written examples and local timings are exploratory, not a representative benchmark or load test.
+- Notebook consistency checks verify the experiment's bookkeeping, not deployment readiness.
+
+## Verify the environment
+
+From the repository root:
+
+```powershell
 .\.venv\Scripts\python.exe -m pytest tests -q -s
 ```
 
-The existing `uv` installer was used to complete installation after pip encountered Windows' path-length limit in a JupyterLab bundled asset. The requirements file is also pip-compatible when used at a shorter path. No system path-length or execution-policy setting was changed.
+The tests check package imports, tensor operations, device detection, the API signatures used by the lab, a tiny randomly initialized T5 model, local SacreBLEU, notebook schemas, VS Code interpreter configuration, and a live Jupyter kernel. They do not download pretrained weights or datasets, train a model, execute the full notebooks, or measure translation quality.
 
-The dedicated kernelspec contains an absolute interpreter path. Re-register it after moving or recreating the project; use a different kernel name if keeping multiple copies. Recreating this environment does not require editing any global Python installation.
-
-## Troubleshooting
-
-- **Wrong packages or missing imports:** check `sys.executable` in the notebook and terminal. Select the project interpreter and kernel, then restart the notebook kernel.
-- **Activation blocked by PowerShell policy:** use `.\.venv\Scripts\python.exe` directly, or choose a Command Prompt terminal and run `.venv\Scripts\activate.bat`. No system execution-policy change is needed.
-- **Kernel missing or stale:** run the `ipykernel install` command above, reload the VS Code window, and select it again.
-- **CUDA reports false:** this is expected for the installed CPU wheel, even though NVIDIA hardware is present.
-- **Model/dataset downloads fail:** check connectivity and disk space. Avoid login or tokens for these public resources unless an actual access error requires them. A sliced dataset load can still download a whole shard; streaming can limit initial data transfer.
-- **Tutorial code differs:** use the compatibility notes and smoke tests before changing versions. Preserve the pinned file and create a separate environment for experiments with upgrades.
-- **T5 predictions disappoint:** verify the checkpoint, prefix, inputs, and decoding. The baseline has not been fine-tuned on your task data.
-
-## Suggested learning sequence
-
-- **Monday, October 12:** notebook 1; inspect pairs, splits, leakage, and domain mismatch.
-- **Tuesday, October 13:** notebook 2; explain source/target tokens, masks, padding, and labels.
-- **Wednesday, October 14:** notebook 3; assess metric limits, retail-specific errors, latency, and quality tradeoffs.
-- **Thursday, October 15:** notebook 4; record a small baseline and compare generation settings. Prepare a short explanation of the complete pipeline.
-- **Friday, October 16:** review your own observations before the interview. Fine-tuning can wait until you decide it is useful.
+If imports or kernel startup fail, check that both the terminal and notebook use the project environment. The pinned PyTorch build uses CPU, so CUDA being unavailable is expected.
